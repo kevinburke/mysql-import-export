@@ -10,8 +10,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/kevinburke/import-export/mysql"
-	"github.com/kevinburke/import-export/ssh"
+	"github.com/kevinburke/ansible-go/mysql"
+	"github.com/kevinburke/ansible-go/ssh"
 
 	yaml "gopkg.in/yaml.v2"
 )
