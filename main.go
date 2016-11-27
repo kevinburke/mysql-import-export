@@ -27,6 +27,7 @@ type Config struct {
 
 func main() {
 	cfg := flag.String("config", "config.yml", "Path to a config file")
+	dur := flag.Duration("duration", 10*time.Minute, "Amount of time to wait")
 	flag.Parse()
 
 	data, err := ioutil.ReadFile(*cfg)
@@ -37,7 +38,7 @@ func main() {
 	if err := yaml.Unmarshal(data, c); err != nil {
 		log.Fatal(err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), *dur)
 	defer cancel()
 
 	tmp, err := ioutil.TempFile("", "db-backup-")
@@ -50,13 +51,13 @@ func main() {
 		Name: c.OldHost,
 		User: "",
 	}
-	mycfg := mysql.CommandConfig{
+	mycfg := mysql.ExecConfig{
 		Host:     "localhost",
 		Port:     "3306",
 		User:     c.DBUser,
 		Password: c.DBPassword,
 	}
-	dumpcfg := mysql.DumpConfig{CommandConfig: mycfg, SingleTransaction: true}
+	dumpcfg := mysql.DumpConfig{ExecConfig: mycfg, SingleTransaction: true}
 
 	writer := bufio.NewWriter(tmp)
 	if err := mysql.DumpWriter(ctx, host, c.DBName, writer, dumpcfg); err != nil {
@@ -86,7 +87,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := mysql.RunCommands(ctx, newHost, c.DBName, f, mycfg); err != nil {
+	if err := mysql.RunCommands(ctx, newHost, f, mysql.RunConfig{ExecConfig: mycfg}); err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("imported data to new host")
